@@ -19,6 +19,7 @@ export class AppComponent implements OnInit {
   editingId: string | null = null;
   message = '';
   errorMessage = '';
+  sortBy: 'newest' | 'title' | 'dueDate' | 'priority' = 'newest';
 
   draft: TaskDraft = this.emptyDraft();
 
@@ -28,16 +29,52 @@ export class AppComponent implements OnInit {
     this.refresh();
   }
 
-  get filteredTasks(): Task[] {
-    const query = this.searchTerm.trim().toLocaleLowerCase();
-    return this.tasks.filter(task => {
-      const matchesText = !query ||
-        task.title.toLocaleLowerCase().includes(query) ||
-        task.description.toLocaleLowerCase().includes(query);
-      const matchesStatus = this.statusFilter === 'All' || task.status === this.statusFilter;
-      return matchesText && matchesStatus;
-    });
+
+get filteredTasks(): Task[] {
+  const query = this.searchTerm.trim().toLocaleLowerCase();
+
+  const filtered = this.tasks.filter(task => {
+    const matchesText = !query ||
+      task.title.toLocaleLowerCase().includes(query) ||
+      task.description.toLocaleLowerCase().includes(query);
+
+    const matchesStatus =
+      this.statusFilter === 'All' ||
+      task.status === this.statusFilter;
+
+    return matchesText && matchesStatus;
+  });
+
+  switch (this.sortBy) {
+    case 'title':
+      return filtered.sort((a, b) =>
+        a.title.localeCompare(b.title)
+      );
+
+    case 'dueDate':
+      return filtered.sort((a, b) => {
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return a.dueDate.localeCompare(b.dueDate);
+      });
+
+    case 'priority': {
+      const priorityOrder: Record<TaskPriority, number> = {
+        High: 1,
+        Medium: 2,
+        Low: 3
+      };
+
+      return filtered.sort((a, b) =>
+        priorityOrder[a.priority] - priorityOrder[b.priority]
+      );
+    }
+
+    case 'newest':
+    default:
+      return filtered;
   }
+}
 
   get completedCount(): number {
     return this.tasks.filter(task => task.status === 'Completed').length;

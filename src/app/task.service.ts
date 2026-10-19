@@ -12,41 +12,62 @@ export class TaskService {
   }
 
   create(draft: TaskDraft): Task {
-    const title = draft.title.trim();
-    if (!title) {
-      throw new Error('Task title is required.');
-    }
-    const task: Task = {
-      ...draft,
-      title,
-      description: draft.description.trim(),
-      id: this.createId(),
-      createdAt: new Date().toISOString()
-    };
-    this.tasks = [task, ...this.tasks];
-    this.persist();
-    return task;
+  const title = draft.title.trim();
+
+  if (!title) {
+    throw new Error('Task title is required.');
   }
 
-  update(id: string, draft: TaskDraft): Task {
-    const index = this.tasks.findIndex(task => task.id === id);
-    if (index < 0) {
-      throw new Error('Task not found.');
-    }
-    const title = draft.title.trim();
-    if (!title) {
-      throw new Error('Task title is required.');
-    }
-    const updated: Task = {
-      ...this.tasks[index],
-      ...draft,
-      title,
-      description: draft.description.trim()
-    };
-    this.tasks = this.tasks.map(task => task.id === id ? updated : task);
-    this.persist();
-    return updated;
+  if (title.length > 120) {
+    throw new Error('Task title must be 120 characters or fewer.');
   }
+
+  const task: Task = {
+    ...draft,
+    title,
+    description: draft.description.trim(),
+    id: this.createId(),
+    createdAt: new Date().toISOString()
+  };
+
+  this.tasks = [task, ...this.tasks];
+  this.persist();
+
+  return task;
+}
+
+ update(id: string, draft: TaskDraft): Task {
+  const index = this.tasks.findIndex(task => task.id === id);
+
+  if (index < 0) {
+    throw new Error('Task not found.');
+  }
+
+  const title = draft.title.trim();
+
+  if (!title) {
+    throw new Error('Task title is required.');
+  }
+
+  if (title.length > 120) {
+    throw new Error('Task title must be 120 characters or fewer.');
+  }
+
+  const updated: Task = {
+    ...this.tasks[index],
+    ...draft,
+    title,
+    description: draft.description.trim()
+  };
+
+  this.tasks = this.tasks.map(task =>
+    task.id === id ? updated : task
+  );
+
+  this.persist();
+
+  return updated;
+}
 
   delete(id: string): void {
     this.tasks = this.tasks.filter(task => task.id !== id);

@@ -1,3 +1,4 @@
+
 import { TestBed } from '@angular/core/testing';
 import { TaskService } from './task.service';
 import { TaskDraft } from './task.model';
@@ -33,11 +34,29 @@ describe('TaskService', () => {
       .toThrowError('Task title is required.');
   });
 
+  it('rejects a title longer than 120 characters when creating a task', () => {
+    expect(() => service.create({ ...draft, title: 'a'.repeat(121) }))
+      .toThrowError('Task title must be 120 characters or fewer.');
+  });
+
+  it('accepts a title with exactly 120 characters', () => {
+    const task = service.create({ ...draft, title: 'a'.repeat(120) });
+    expect(task.title.length).toBe(120);
+  });
+
   it('updates an existing task', () => {
     const created = service.create(draft);
     const updated = service.update(created.id, { ...draft, title: 'Updated title' });
     expect(updated.title).toBe('Updated title');
     expect(service.getAll().some(task => task.title === 'Updated title')).toBeTrue();
+  });
+
+  it('rejects a title longer than 120 characters when updating a task', () => {
+    const created = service.create(draft);
+
+    expect(() =>
+      service.update(created.id, { ...draft, title: 'a'.repeat(121) })
+    ).toThrowError('Task title must be 120 characters or fewer.');
   });
 
   it('throws when updating a task that does not exist', () => {
